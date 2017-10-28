@@ -1,0 +1,53 @@
+<!DOCTYPE HTML>
+<head>
+<title>Chatty Client</title>
+<meta charset="UTF-8">
+</head>
+<html>
+<body>
+Target Address: <input type="text" id="tarAddress" value="ws://localhost:8080/DumbWebSocketServer/echo"><br>
+<button onclick="socketConnect()">Connect</button>
+<span id="connectionStat"></span><br>
+
+<textarea id="msgs" rows="30" cols="60" readonly></textarea><br> 
+<br>
+<textarea id="messageOut" rows="6" cols="60">Insert Message Here!</textarea><br>
+<button onclick="mySend()">Send</button>
+
+<script type="text/javascript">
+var clientSocket;
+
+function mySend() 
+{
+	document.getElementById("msgs").value = document.getElementById("msgs").value +"You: "+document.getElementById("messageOut").value+"\n\r";
+	document.getElementById("msgs").scrollTop = document.getElementById("msgs").scrollHeight;
+	clientSocket.send(document.getElementById("messageOut").value);
+	document.getElementById("messageOut").value="";
+}
+function socketConnect() 
+{
+	clientSocket = new WebSocket (document.getElementById("tarAddress").value);
+	//clientSocket events
+	clientSocket.onopen = function()
+	{ 
+		document.getElementById("connectionStat").innerHTML="Connection Opened!";
+	};
+	clientSocket.onclose = function()
+	{
+		document.getElementById("connectionStat").innerHTML="Connection Closed!";
+	};
+	clientSocket.onerror = function()
+	{
+		document.getElementById("connectionStat").innerHTML="Connection Error!";
+	};
+	clientSocket.onmessage = function(event)
+	{			
+		document.getElementById("msgs").value = document.getElementById("msgs").value+"Cathy: "+event.data+"\n\r";
+		document.getElementById("msgs").scrollTop = document.getElementById("msgs").scrollHeight;
+
+	};
+}
+</script>
+
+</body>
+</html>
