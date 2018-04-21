@@ -9,6 +9,7 @@ admin.initializeApp(functions.config().firebase);
 
 var db = admin.database();
 var ref = db.ref("/transamerica-dummy-data");
+var maxPeoplePerAccount = 10;
 
 // API.AI Intent names
 const OWNER_LOOKUP_INTENT = 'Owner-Lookup';
@@ -30,6 +31,7 @@ const PHONE_LOOKUP_INTENT = 'Phone-Lookup';
 const SSN_LOOKUP_INTENT = 'SSN-Lookup';
 const EMAIL_LOOKUP_INTENT = 'Email-Lookup';
 const ROLE_LOOKUP_INTENT = 'Role-Lookup';
+const MASTER_LOOKUP_INTENT = 'master';
 
 
 const CASH_VALUE_UPDATE_INTENT = 'Cash-Value-Update';
@@ -97,6 +99,7 @@ exports.assistantcodelab = functions.https.onRequest((request, response) => {
 	actionMap.set(SSN_UPDATE_INTENT, ssnUpdate);
 	actionMap.set(EMAIL_UPDATE_INTENT, emailUpdate);
 	actionMap.set(ROLE_UPDATE_INTENT, roleUpdate);
+	actionMap.set(MASTER_LOOKUP_INTENT, masterFind);
 	assistant.handleRequest(actionMap);
     
 
@@ -106,13 +109,27 @@ function OwnerFind(assistant){
 	var role;
 	var found = 0;
 	ref.on("child_added",function(snapshot) {
-		for(var x=0;x<10;x++)
+		for(var x=0;x<maxPeoplePerAccount;x++)
 		{
 			role = snapshot.child(req).child("people").child(x).child("role").val();
 			if(role === 'Primary Owner')
 			{
 				found = 1;
-				assistant.ask(snapshot.child(req).child("people").child(x).child("firstName").val() + " " + snapshot.child(req).child("people").child(x).child("lastName").val() + " is the owner of account number "+req);
+				//assistant.ask(snapshot.child(req).child("people").child(x).child("firstName").val() + " " + snapshot.child(req).child("people").child(x).child("lastName").val() + " is the owner of account number "+req);getting context form webhook dialogflow
+	var fulfilment = {
+	contextOut: [
+        {
+            "name": "username",
+            "lifespan": 1,
+            "parameters": {
+                "firstName":snapshot.child(req).child("people").child(x).child("firstName").val() ,
+                "lastName": snapshot.child(req).child("people").child(x).child("lastName").val()
+            }
+        }
+    ]
+}
+console.log("response: ", fulfilment);
+response.json(fulfilment);
 			}
 		}
 		if(found === 0)
@@ -128,7 +145,7 @@ function EveryoneFind(assistant){
 		if(snapshot.child(req).child("people").child(x).child("firstName").val() !== null)
 		{
 		var names = snapshot.child(req).child("people").child(x).child("firstName").val() + ' ' + snapshot.child(req).child("people").child(x).child("lastName").val();
-		for(x=1;x<10;x++)
+		for(x=1;x<maxPeoplePerAccount;x++)
 		{
 			if(snapshot.child(req).child("people").child(x).child("firstName").val() !== null)
 			{
@@ -146,7 +163,20 @@ function EveryoneFind(assistant){
 function cashValueFind(assistant){
 	var req = request.body.result.parameters.acctNum;
 	ref.on("child_added",function(snapshot) {
-	assistant.ask('It looks like the cash value of that account is $'+snapshot.child(req).child("cashValue").val());
+	//assistant.ask('It looks like the cash value of that account is $'+snapshot.child(req).child("cashValue").val());
+	var fulfilment = {
+	contextOut: [
+        {
+            "name": "cashvalue",
+            "lifespan": 10,
+            "parameters": {
+                "cashval":snapshot.child(req).child("cashValue").val()
+            }
+        }
+    ]
+}
+console.log("response: ", fulfilment);
+response.json(fulfilment);
 	});	
 }
 
@@ -225,7 +255,7 @@ function DOBFind(assistant){
 	var lastSSN = request.body.result.parameters.ssn;
 	var testSSN;
 	ref.on("child_added",function(snapshot) {
-	for(var x = 0; x < 10;x++)
+	for(var x = 0; x < maxPeoplePerAccount;x++)
 	{
 		testSSN = snapshot.child(req).child("people").child(x).child("customerSSN").val()
 		if(testSSN === null)
@@ -252,7 +282,7 @@ var req = request.body.result.parameters.acctNum;
 	var lastSSN = request.body.result.parameters.ssn;
 	var testSSN;
 	ref.on("child_added",function(snapshot) {
-	for(var x = 0; x < 10;x++)
+	for(var x = 0; x < maxPeoplePerAccount;x++)
 	{
 		testSSN = snapshot.child(req).child("people").child(x).child("customerSSN").val()
 		if(testSSN === null)
@@ -279,7 +309,7 @@ var req = request.body.result.parameters.acctNum;
 	var lastSSN = request.body.result.parameters.ssn;
 	var testSSN;
 	ref.on("child_added",function(snapshot) {
-	for(var x = 0; x < 10;x++)
+	for(var x = 0; x < maxPeoplePerAccount;x++)
 	{
 		testSSN = snapshot.child(req).child("people").child(x).child("customerSSN").val();
 		if(testSSN === null)
@@ -305,7 +335,7 @@ var req = request.body.result.parameters.acctNum;
 	var lastSSN = request.body.result.parameters.ssn;
 	var testSSN;
 	ref.on("child_added",function(snapshot) {
-	for(var x = 0; x < 10;x++)
+	for(var x = 0; x < maxPeoplePerAccount;x++)
 	{
 		testSSN = snapshot.child(req).child("people").child(x).child("customerSSN").val()
 		if(testSSN === null)
@@ -331,7 +361,7 @@ var req = request.body.result.parameters.acctNum;
 	var lastSSN = request.body.result.parameters.ssn;
 	var testSSN;
 	ref.on("child_added",function(snapshot) {
-	for(var x = 0; x < 10;x++)
+	for(var x = 0; x < maxPeoplePerAccount;x++)
 	{
 		testSSN = snapshot.child(req).child("people").child(x).child("customerSSN").val()
 		if(testSSN === null)
@@ -357,7 +387,7 @@ var req = request.body.result.parameters.acctNum;
 	var lastSSN = request.body.result.parameters.ssn;
 	var testSSN;
 	ref.on("child_added",function(snapshot) {
-	for(var x = 0; x < 10;x++)
+	for(var x = 0; x < maxPeoplePerAccount;x++)
 	{
 		testSSN = snapshot.child(req).child("people").child(x).child("customerSSN").val()
 		if(testSSN === null)
@@ -383,7 +413,7 @@ var req = request.body.result.parameters.acctNum;
 	var lastSSN = request.body.result.parameters.ssn;
 	var testSSN;
 	ref.on("child_added",function(snapshot) {
-	for(var x = 0; x < 10;x++)
+	for(var x = 0; x < maxPeoplePerAccount;x++)
 	{
 		testSSN = snapshot.child(req).child("people").child(x).child("customerSSN").val()
 		if(testSSN === null)
@@ -481,7 +511,7 @@ function DOBUpdate(assistant){
 	var newVal = request.body.result.parameters.dob;
 	var testSSN;
 	ref.on("child_added",function(snapshot) {
-	for(var x = 0; x < 10;x++)
+	for(var x = 0; x < maxPeoplePerAccount;x++)
 	{
 		testSSN = snapshot.child(req).child("people").child(x).child("customerSSN").val()
 		if(testSSN === null)
@@ -509,7 +539,7 @@ var req = request.body.result.parameters.acctNum;
 	var newVal = request.body.result.parameters.gender;
 	var testSSN;
 	ref.on("child_added",function(snapshot) {
-	for(var x = 0; x < 10;x++)
+	for(var x = 0; x < maxPeoplePerAccount;x++)
 	{
 		testSSN = snapshot.child(req).child("people").child(x).child("customerSSN").val()
 		if(testSSN === null)
@@ -518,7 +548,7 @@ var req = request.body.result.parameters.acctNum;
 		//console.log('testSSN '+testSSN+', lastSSN '+ lastSSN);
 		if(testSSN === lastSSN.toString())
 		{
-	db.ref("transamerica-dummy-data/accounts/"+req+"/people/"+x).update({gender: newVal});
+	db.ref("transamerica-dummy-data/accounts/"+req+"/people/"+x).update({Gender: newVal});
 			testSSN = 'End';
 			break;
 		}
@@ -537,7 +567,7 @@ var req = request.body.result.parameters.acctNum;
 	var newVal = request.body.result.parameters.phone;
 	var testSSN;
 	ref.on("child_added",function(snapshot) {
-	for(var x = 0; x < 10;x++)
+	for(var x = 0; x < maxPeoplePerAccount;x++)
 	{
 		testSSN = snapshot.child(req).child("people").child(x).child("customerSSN").val()
 		if(testSSN === null)
@@ -565,7 +595,7 @@ var req = request.body.result.parameters.acctNum;
 	var newVal = request.body.result.parameters.newssn;
 	var testSSN;
 	ref.on("child_added",function(snapshot) {
-	for(var x = 0; x < 10;x++)
+	for(var x = 0; x < maxPeoplePerAccount;x++)
 	{
 		testSSN = snapshot.child(req).child("people").child(x).child("customerSSN").val()
 		if(testSSN === null)
@@ -593,7 +623,7 @@ var req = request.body.result.parameters.acctNum;
 	var newVal = request.body.result.parameters.email;
 	var testSSN;
 	ref.on("child_added",function(snapshot) {
-	for(var x = 0; x < 10;x++)
+	for(var x = 0; x < maxPeoplePerAccount;x++)
 	{
 		testSSN = snapshot.child(req).child("people").child(x).child("customerSSN").val()
 		if(testSSN === null)
@@ -621,7 +651,7 @@ var req = request.body.result.parameters.acctNum;
 	var newVal = request.body.result.parameters.role;
 	var testSSN;
 	ref.on("child_added",function(snapshot) {
-	for(var x = 0; x < 10;x++)
+	for(var x = 0; x < maxPeoplePerAccount;x++)
 	{
 		testSSN = snapshot.child(req).child("people").child(x).child("customerSSN").val()
 		if(testSSN === null)
@@ -653,7 +683,7 @@ var req = request.body.result.parameters.acctNum;
 	var newCountry = request.body.result.parameters.addCountry;
 	var testSSN;
 	ref.on("child_added",function(snapshot) {
-	for(var x = 0; x < 10;x++)
+	for(var x = 0; x < maxPeoplePerAccount;x++)
 	{
 		testSSN = snapshot.child(req).child("people").child(x).child("customerSSN").val()
 		if(testSSN === null)
@@ -676,6 +706,63 @@ var req = request.body.result.parameters.acctNum;
 	assistant.ask('Sorry, I could not find anyone with that information');
 	else
 	assistant.ask('Done!');
+	});
+}
+
+function masterFind(assistant){
+	var req = request.body.result.parameters.acctNum;
+	var lastSSN = request.body.result.parameters.ssn;
+	var testSSN;
+	ref.on("child_added",function(snapshot) {
+	for(var x = 0; x < maxPeoplePerAccount;x++)
+	{
+		testSSN = snapshot.child(req).child("people").child(x).child("customerSSN").val()
+		if(testSSN === null)
+			break;
+	testSSN = testSSN.substring(testSSN.length-4,testSSN.length);
+	console.log('testSSN '+testSSN+', lastSSN '+ lastSSN);
+	if(testSSN === lastSSN.toString())
+	{
+		var fulfilment = {
+		contextOut: [
+        	{
+            "name": "master",
+            "lifespan": 99,
+            "parameters": {
+                "firstName":snapshot.child(req).child("people").child(x).child("firstName").val() ,
+                "lastName": snapshot.child(req).child("people").child(x).child("lastName").val() ,
+		"DateOfBirth":snapshot.child(req).child("people").child(x).child("DateOfBirth").val() ,
+		"Gender":snapshot.child(req).child("people").child(x).child("Gender").val() ,
+	"addressCity":snapshot.child(req).child("people").child(x).child("addressCity").val() ,
+	"addressCountry":snapshot.child(req).child("people").child(x).child("addressCountry").val() ,
+	"addressState":snapshot.child(req).child("people").child(x).child("addressState").val() ,
+	"addressStreet":snapshot.child(req).child("people").child(x).child("addressStreet").val() ,
+	"addressZip":snapshot.child(req).child("people").child(x).child("addressZip").val() ,
+	"contactPhone":snapshot.child(req).child("people").child(x).child("contactPhone").val() ,
+	"customerSSN":snapshot.child(req).child("people").child(x).child("customerSSN").val() ,
+	"email":snapshot.child(req).child("people").child(x).child("email").val() ,
+	"role":snapshot.child(req).child("people").child(x).child("role").val() ,
+	"LineOfBusiness":snapshot.child(req).child("LineOfBusiness").val() ,
+	"cashValue":snapshot.child(req).child("cashValue").val() ,
+	"coveragePhase":snapshot.child(req).child("coveragePhase").val() ,
+	"initialPremium":snapshot.child(req).child("initialPremium").val() ,
+	"issueDate":snapshot.child(req).child("issueDate").val() ,	
+	"payoutValue":snapshot.child(req).child("payoutValue").val() ,
+	"policyNum":snapshot.child(req).child("policyNum").val() ,
+	"productName":snapshot.child(req).child("productName").val() ,
+	"status":snapshot.child(req).child("status").val() ,
+	"terminationDate":snapshot.child(req).child("terminationDate").val() ,
+        		    }
+        		}
+    		]
+	}//Fulfilment
+testSSN = "End";
+console.log("response: ", fulfilment);
+response.json(fulfilment);
+			}
+		}
+		if(testSSN !== "End")
+	assistant.ask('Sorry, I could not find anyone with that information');
 	});
 }
 
